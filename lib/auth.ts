@@ -5,15 +5,12 @@ import { User } from '@supabase/supabase-js';
 export class AuthService {
   static async signInWithGoogle(): Promise<{ success: boolean; error?: string }> {
     try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
-        }
-      });
-
-      if (error) throw error;
-
+      // Use direct URL redirect instead of OAuth method
+      const redirectUrl = `${window.location.origin}/auth/callback`;
+      const oauthUrl = `https://idpflboxrlsnhfwnppdu.supabase.co/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`;
+      
+      window.location.href = oauthUrl;
+      
       return { success: true };
     } catch (error) {
       console.error('Error signing in with Google:', error);

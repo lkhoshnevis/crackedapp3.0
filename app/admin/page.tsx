@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, Users, TrendingUp, Search, Eye } from 'lucide-react';
 import { AlumniProfile } from '@/lib/types';
-import { CSVParser } from '@/lib/csv-parser';
 import { supabaseAdmin } from '@/lib/supabase';
 import AlumniProfileCard from '@/components/AlumniProfileCard';
 
@@ -94,16 +93,17 @@ export default function AdminPage() {
     setUploadResult(null);
 
     try {
-      const text = await file.text();
-      
-      // Validate CSV format
-      const validation = CSVParser.validateCSVFormat(text);
-      if (!validation.valid) {
-        throw new Error(`Invalid CSV format: ${validation.errors.join(', ')}`);
-      }
+      // Create form data
+      const formData = new FormData();
+      formData.append('file', file);
 
-      // Upload data
-      const result = await CSVParser.uploadCSVData(text);
+      // Upload via API route
+      const response = await fetch('/api/upload-csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
       setUploadResult(result);
 
       if (result.success) {

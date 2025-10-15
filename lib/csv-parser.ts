@@ -101,16 +101,76 @@ export class CSVParser {
       const stats = {
         total: csvRows.length,
         updated: 0,
-        inserted: csvRows.length,
+        inserted: 0,
         errors: 0
       };
 
-      // TODO: Implement actual database upload
-      console.log('CSV data parsed:', csvRows.length, 'rows');
+      // Import supabaseAdmin dynamically to avoid server-side import issues
+      const { supabaseAdmin } = await import('./supabase');
 
+      for (const row of csvRows) {
+        try {
+          // Convert CSV row to AlumniProfile
+          const profile = this.csvRowToAlumniProfile(row);
+          
+          // Create insert data by removing auto-generated fields
+          const insertData = {
+            name: profile.name,
+            location: profile.location,
+            profile_picture_url: profile.profile_picture_url,
+            high_school: profile.high_school,
+            dvhs_class_of: profile.dvhs_class_of,
+            college_1_name: profile.college_1_name,
+            college_1_degree: profile.college_1_degree,
+            college_1_logo: profile.college_1_logo,
+            college_2_name: profile.college_2_name,
+            college_2_degree: profile.college_2_degree,
+            college_2_logo: profile.college_2_logo,
+            college_3_name: profile.college_3_name,
+            college_3_degree: profile.college_3_degree,
+            college_3_logo: profile.college_3_logo,
+            experience_1_company: profile.experience_1_company,
+            experience_1_role: profile.experience_1_role,
+            experience_1_logo: profile.experience_1_logo,
+            experience_2_company: profile.experience_2_company,
+            experience_2_role: profile.experience_2_role,
+            experience_2_logo: profile.experience_2_logo,
+            experience_3_company: profile.experience_3_company,
+            experience_3_role: profile.experience_3_role,
+            experience_3_logo: profile.experience_3_logo,
+            experience_4_company: profile.experience_4_company,
+            experience_4_role: profile.experience_4_role,
+            experience_4_logo: profile.experience_4_logo,
+            linkedin_url: profile.linkedin_url,
+            elo: profile.elo,
+            email: profile.email,
+            phone_number: profile.phone_number
+          };
+
+          // Insert into database
+          const { data, error } = await (supabaseAdmin as any)
+            .from('alumni_profiles')
+            .insert([insertData])
+            .select()
+            .single();
+
+          if (error) {
+            console.error('Error inserting profile:', error);
+            stats.errors++;
+          } else {
+            stats.inserted++;
+          }
+        } catch (error) {
+          console.error('Error processing row:', error);
+          stats.errors++;
+        }
+      }
+
+      const successMessage = `Successfully processed ${stats.total} profiles. ${stats.inserted} inserted, ${stats.updated} updated, ${stats.errors} errors.`;
+      
       return {
-        success: true,
-        message: `Successfully processed ${stats.total} profiles. ${stats.inserted} inserted, ${stats.updated} updated, ${stats.errors} errors.`,
+        success: stats.errors === 0,
+        message: successMessage,
         stats
       };
 
